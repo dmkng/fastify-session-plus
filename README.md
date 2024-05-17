@@ -2,31 +2,31 @@
 
 <!-- markdownlint-disable MD033 -->
 <p align="center">
-  <a href="https://www.npmjs.com/package/@mgcrea/fastify-session">
-    <img src="https://img.shields.io/npm/v/@mgcrea/fastify-session.svg?style=for-the-badge" alt="npm version" />
+  <a href="https://www.npmjs.com/package/fastify-session-plus">
+    <img src="https://img.shields.io/npm/v/fastify-session-plus.svg?style=for-the-badge" alt="npm version" />
   </a>
-  <a href="https://www.npmjs.com/package/@mgcrea/fastify-session">
-    <img src="https://img.shields.io/npm/dt/@mgcrea/fastify-session.svg?style=for-the-badge" alt="npm total downloads" />
+  <a href="https://www.npmjs.com/package/fastify-session-plus">
+    <img src="https://img.shields.io/npm/dt/fastify-session-plus.svg?style=for-the-badge" alt="npm total downloads" />
   </a>
-  <a href="https://www.npmjs.com/package/@mgcrea/fastify-session">
-    <img src="https://img.shields.io/npm/dm/@mgcrea/fastify-session.svg?style=for-the-badge" alt="npm monthly downloads" />
+  <a href="https://www.npmjs.com/package/fastify-session-plus">
+    <img src="https://img.shields.io/npm/dm/fastify-session-plus.svg?style=for-the-badge" alt="npm monthly downloads" />
   </a>
-  <a href="https://www.npmjs.com/package/@mgcrea/fastify-session">
-    <img src="https://img.shields.io/npm/l/@mgcrea/fastify-session.svg?style=for-the-badge" alt="npm license" />
+  <a href="https://www.npmjs.com/package/fastify-session-plus">
+    <img src="https://img.shields.io/npm/l/fastify-session-plus.svg?style=for-the-badge" alt="npm license" />
   </a>
   <br />
-  <a href="https://github.com/mgcrea/fastify-session/actions/workflows/main.yml">
-    <img src="https://img.shields.io/github/actions/workflow/status/mgcrea/fastify-session/main.yml?style=for-the-badge&branch=master" alt="build status" />
+  <a href="https://github.com/dmkng/fastify-session-plus/actions/workflows/main.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/dmkng/fastify-session-plus/main.yml?style=for-the-badge&branch=master" alt="build status" />
   </a>
-  <a href="https://depfu.com/github/mgcrea/fastify-session">
-    <img src="https://img.shields.io/depfu/dependencies/github/mgcrea/fastify-session?style=for-the-badge" alt="dependencies status" />
+  <a href="https://depfu.com/github/dmkng/fastify-session-plus">
+    <img src="https://img.shields.io/depfu/dependencies/github/dmkng/fastify-session-plus?style=for-the-badge" alt="dependencies status" />
   </a>
 </p>
 <!-- markdownlint-enable MD037 -->
 
 ## Features
 
-Session plugin for [fastify](https://github.com/fastify/fastify) that supports both stateless and sateful sessions.
+Session plugin for [fastify](https://github.com/fastify/fastify) that supports both stateless and stateful sessions. This is a fork with additional backward compatible features.
 
 - Requires [@fastify/cookie](https://github.com/fastify/fastify-cookie) to handle cookies.
 
@@ -47,9 +47,9 @@ Session plugin for [fastify](https://github.com/fastify/fastify) that supports b
 ## Install
 
 ```bash
-npm install @mgcrea/fastify-session @fastify/cookie
+npm install fastify-session-plus @fastify/cookie
 # or
-pnpm add @mgcrea/fastify-session @fastify/cookie
+pnpm add fastify-session-plus @fastify/cookie
 ```
 
 ## Quickstart
@@ -95,7 +95,7 @@ import fastifyCookie from 'fastify-cookie';
 import fastifySession from '@mgcrea/fastify-session';
 import { SODIUM_AUTH } from '@mgcrea/fastify-session-sodium-crypto';
 
-const SESSION_KEY = 'Egb/g4RUumlD2YhWYfeDlm5MddajSjGEBhm0OW+yo9s='';
+const SESSION_KEY = 'Egb/g4RUumlD2YhWYfeDlm5MddajSjGEBhm0OW+yo9s=';
 const SESSION_TTL = 86400; // 1 day in seconds
 const REDIS_URI = process.env.REDIS_URI || 'redis://localhost:6379/1';
 
@@ -136,6 +136,39 @@ export const buildFastify = (options?: FastifyServerOptions): FastifyInstance =>
   fastify.register(fastifySession, {
     secret: "a secret with minimum length of 32 characters",
     crypto: SODIUM_SECRETBOX,
+    cookie: { maxAge: SESSION_TTL },
+  });
+
+  return fastify;
+};
+```
+
+### Stateless example with custom data serialization
+
+Here we used [msgpackr](https://npm.im/msgpackr) to serialize the data instead of the default JSON and also disabled generating/saving the session ID.
+
+```ts
+import createFastify, { FastifyInstance, FastifyServerOptions } from "fastify";
+import fastifyCookie from "fastify-cookie";
+import fastifySession, { StatelessStore } from "@mgcrea/fastify-session";
+import { SODIUM_SECRETBOX } from "@mgcrea/fastify-session-sodium-crypto";
+import { pack, unpack } from "msgpackr";
+
+const SESSION_KEY = 'Egb/g4RUumlD2YhWYfeDlm5MddajSjGEBhm0OW+yo9s=';
+const SESSION_TTL = 86400; // 1 day in seconds
+
+export const buildFastify = (options?: FastifyServerOptions): FastifyInstance => {
+  const fastify = createFastify(options);
+
+  fastify.register(fastifyCookie);
+  fastify.register(fastifySession, {
+    key: Buffer.from(SESSION_KEY, 'base64'),
+    crypto: SODIUM_SECRETBOX,
+    store: new StatelessStore({
+      serialize: async (session: T): Promise<Buffer> => pack(session),
+      deserialize: async (session: Buffer): Promise<T> => unpack(session),
+      useId: false
+    }),
     cookie: { maxAge: SESSION_TTL },
   });
 

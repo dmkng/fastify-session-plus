@@ -3,7 +3,7 @@ import { nanoid } from "nanoid";
 import assert from "node:assert";
 import { HMAC } from "../crypto/Hmac";
 import type { SessionCrypto } from "../crypto/SessionCrypto";
-import { MEMORY_STORE, SessionStore } from "../store";
+import { MEMORY_STORE, STATELESS_STORE, StatelessStore, SessionStore } from "../store";
 import { createError } from "../utils";
 import type { SessionData } from "./SessionData";
 
@@ -27,7 +27,7 @@ export type SessionOptions = CookieSerializeOptions & {
  */
 export class Session<T extends SessionData = SessionData> {
   // Session metadata
-  public readonly id: string;
+  public readonly id: string | undefined;
   public created = false;
   public rotated = false;
   public changed = false;
@@ -43,7 +43,7 @@ export class Session<T extends SessionData = SessionData> {
   // Private static fields
   static #secretKeys: Buffer[];
   static #sessionCrypto: SessionCrypto;
-  static #sessionStore?: SessionStore;
+  static #sessionStore: SessionStore;
   static #globalCookieOptions: CookieSerializeOptions;
   static #configured = false;
 
@@ -53,12 +53,12 @@ export class Session<T extends SessionData = SessionData> {
   static configure({
     secretKeys,
     crypto = HMAC,
-    store = MEMORY_STORE,
-    cookieOptions = {},
+    store,
+    cookieOptions = {}
   }: SessionConfiguration): void {
     Session.#secretKeys = secretKeys;
     Session.#sessionCrypto = crypto;
-    Session.#sessionStore = store;
+    Session.#sessionStore = store || (crypto.stateless ? STATELESS_STORE : MEMORY_STORE);
     Session.#globalCookieOptions = cookieOptions;
     Session.#configured = true;
   }
@@ -67,7 +67,7 @@ export class Session<T extends SessionData = SessionData> {
    * Private constructor - instances should be created via the static `create` method
    */
   private constructor(data?: Partial<T>, options: SessionOptions = {}) {
-    const { id = nanoid(), ...cookieOptions } = options;
+    const { id = (Session.#sessionStore as StatelessStore).useId ? nanoid() : undefined, ...cookieOptions } = options;
     this.#sessionData = data || {};
     this.#cookieOptions = { ...Session.#globalCookieOptions, ...cookieOptions };
     this.id = id;
@@ -102,28 +102,28 @@ export class Session<T extends SessionData = SessionData> {
    * Determines the type of the session (stateful/stateless) and delegates to the appropriate method.
    */
   static async fromCookie(cookie: string): Promise<Session> {
-    const { buffer: cleartext, rotated } = Session.#sessionCrypto.unsealMessage(cookie, Session.#secretKeys);
+    const { buffer, rotated } = Session.#sessionCrypto.unsealMessage(cookie, Session.#secretKeys);
 
     if (Session.#sessionCrypto.stateless) {
-      return await Session.fromStatelessCookie(cleartext.toString(), rotated);
+      return await Session.fromStatelessCookie(buffer, rotated);
     }
-    return await Session.fromStatefulCookie(cleartext.toString(), rotated);
+    return await Session.fromStatefulCookie(buffer.toString(), rotated);
   }
 
   /**
    * Create a Session from a stateless cookie. The session data is all stored in the cookie.
    */
-  private static async fromStatelessCookie(payload: string, rotated: boolean): Promise<Session> {
+  private static async fromStatelessCookie(payload: Buffer, rotated: boolean): Promise<Session> {
     let data;
     try {
-      data = JSON.parse(payload);
+      data = await (Session.#sessionStore as StatelessStore).deserialize(payload);
     } catch (error) {
       throw createError(
         "InvalidData",
         "Failed to parse session data from cookie. Original error: ${error.message}",
       );
     }
-    const session = await Session.create(data, { id: data.id });
+    const session = await Session.create(data, (Session.#sessionStore as StatelessStore).useId ? { id: data.id as string } : undefined);
     session.rotated = rotated;
     return session;
   }
@@ -159,12 +159,12 @@ export class Session<T extends SessionData = SessionData> {
    * The format of the cookie depends on whether the session is stateful or stateless.
    */
   async toCookie(): Promise<string> {
-    const buffer = Buffer.from(
-      Session.#sessionCrypto.stateless ? JSON.stringify({ ...this.#sessionData, id: this.id }) : this.id,
-    );
     if (!Session.#secretKeys[0]) {
       throw createError("MissingSecretKey", "Missing secret key for session encryption");
     }
+    const buffer = Session.#sessionCrypto.stateless ? await (Session.#sessionStore as StatelessStore).serialize((Session.#sessionStore as StatelessStore).useId ? {
+      ...this.#sessionData, id: this.id
+    } : this.#sessionData) : Buffer.from(this.id as string);
     return Session.#sessionCrypto.sealMessage(buffer, Session.#secretKeys[0]);
   }
 
@@ -187,7 +187,7 @@ export class Session<T extends SessionData = SessionData> {
     assert(Session.#sessionStore);
     // Only relay touch to the store for existing sessions to propagate expiry changes
     if (!this.created && Session.#sessionStore.touch) {
-      await Session.#sessionStore.touch(this.id, this.#expiry);
+      await Session.#sessionStore.touch(this.id as string, this.#expiry);
     }
   }
 
@@ -204,7 +204,7 @@ export class Session<T extends SessionData = SessionData> {
       return;
     }
     assert(Session.#sessionStore);
-    await Session.#sessionStore.destroy(this.id);
+    await Session.#sessionStore.destroy(this.id as string);
   }
 
   /**
@@ -217,7 +217,7 @@ export class Session<T extends SessionData = SessionData> {
     this.saved = true;
     // Save session to store with store-handled expiry
     assert(Session.#sessionStore);
-    await Session.#sessionStore.set(this.id, this.#sessionData, this.#expiry);
+    await Session.#sessionStore.set(this.id as string, this.#sessionData, this.#expiry);
   }
 
   get data(): SessionData {
