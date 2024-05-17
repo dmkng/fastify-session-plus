@@ -283,7 +283,7 @@ var Session = class _Session {
     } catch (error) {
       throw createError(
         "InvalidData",
-        "Failed to parse session data from cookie. Original error: ${error.message}"
+        "Failed to parse session data from cookie. Original error: " + error
       );
     }
     const session = await _Session.create(data, _Session.#sessionStore.useId ? { id: data.id } : void 0);

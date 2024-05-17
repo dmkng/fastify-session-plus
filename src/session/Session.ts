@@ -120,7 +120,7 @@ export class Session<T extends SessionData = SessionData> {
     } catch (error) {
       throw createError(
         "InvalidData",
-        "Failed to parse session data from cookie. Original error: ${error.message}",
+        "Failed to parse session data from cookie. Original error: " + error,
       );
     }
     const session = await Session.create(data, (Session.#sessionStore as StatelessStore).useId ? { id: data.id as string } : undefined);
