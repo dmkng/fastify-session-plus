@@ -35,11 +35,11 @@
     "benchmark:cryptoDeserialize": "tsc --showConfig > test/tsconfig.json && cross-env TS_NODE_DIR=test node --experimental-specifier-resolution=node --loader=ts-paths-esm-loader/transpile-only --no-warnings test/benchmark/cryptoDeserialize.ts"
   },
   "dependencies": {
-    "@fastify/cookie": "^9.3.1",
     "fastify-plugin": "^4.5.1",
     "nanoid": "^3.3.7"
   },
   "devDependencies": {
+    "@fastify/cookie": "^9.3.1",
     "@mgcrea/eslint-config-node": "^0.10.1",
     "@mgcrea/fastify-session-redis-store": "^1.0.0",
     "@mgcrea/fastify-session-sodium-crypto": "^1.2.0",

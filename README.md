@@ -150,7 +150,7 @@ Here we used [msgpackr](https://npm.im/msgpackr) to serialize the data instead o
 ```ts
 import createFastify, { FastifyInstance, FastifyServerOptions } from "fastify";
 import fastifyCookie from "@fastify/cookie";
-import fastifySessions, { StatelessStore } from "fastify-sessions";
+import fastifySessions, { SessionData, StatelessStore } from "fastify-sessions";
 import { SODIUM_SECRETBOX } from "@mgcrea/fastify-session-sodium-crypto";
 import { pack, unpack } from "msgpackr";
 
@@ -165,8 +165,8 @@ export const buildFastify = (options?: FastifyServerOptions): FastifyInstance =>
     key: Buffer.from(SESSION_KEY, 'base64'),
     crypto: SODIUM_SECRETBOX,
     store: new StatelessStore({
-      serialize: async (session: T): Promise<Buffer> => pack(session),
-      deserialize: async (session: Buffer): Promise<T> => unpack(session),
+      serialize: async (session: SessionData): Promise<Buffer> => pack(session),
+      deserialize: async (session: Buffer): Promise<SessionData> => unpack(session),
       useId: false
     }),
     cookie: { maxAge: SESSION_TTL },
