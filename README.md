@@ -26,7 +26,7 @@
 
 ## Features
 
-Session plugin for [fastify](https://npm.im/fastify) written in TypeScript supporting both stateless and stateful sessions, fork of [@mgcrea/fastify-session](https://npm.im/@mgcrea/fastify-session) adding a lot of features while keeping compatibility.
+Session plugin for [fastify](https://npm.im/fastify) supporting both stateless and stateful sessions, fork of [@mgcrea/fastify-session](https://npm.im/@mgcrea/fastify-session) adding a lot of features while keeping compatibility.
 
 - Requires [@fastify/cookie](https://npm.im/@fastify/cookie) to handle cookies.
 
