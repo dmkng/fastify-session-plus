@@ -1,4 +1,4 @@
-# FastifySession
+# FastifySession+
 
 <!-- markdownlint-disable MD033 -->
 <p align="center">
@@ -62,7 +62,7 @@ Defaults to a volatile in-memory store for sessions (great for tests), with
 ```ts
 import createFastify, { FastifyInstance, FastifyServerOptions } from "fastify";
 import fastifyCookie from "@fastify/cookie";
-import fastifySession from "@mgcrea/fastify-session";
+import fastifySession from "fastify-session-plus";
 
 const SESSION_SECRET = "a secret with minimum length of 32 characters";
 const SESSION_TTL = 86400; // 1 day in seconds
@@ -90,21 +90,21 @@ using a secret-key with
 [libsodium's crytpo_auth](https://libsodium.gitbook.io/doc/secret-key_cryptography/secret-key_authentication)
 
 ```ts
-import createFastify, { FastifyInstance, FastifyServerOptions } from 'fastify';
-import fastifyCookie from 'fastify-cookie';
-import fastifySession from '@mgcrea/fastify-session';
-import { SODIUM_AUTH } from '@mgcrea/fastify-session-sodium-crypto';
+import createFastify, { FastifyInstance, FastifyServerOptions } from "fastify";
+import fastifyCookie from "fastify-cookie";
+import fastifySession from "fastify-session-plus";
+import { SODIUM_AUTH } from "@mgcrea/fastify-session-sodium-crypto";
 
-const SESSION_KEY = 'Egb/g4RUumlD2YhWYfeDlm5MddajSjGEBhm0OW+yo9s=';
+const SESSION_KEY = "Egb/g4RUumlD2YhWYfeDlm5MddajSjGEBhm0OW+yo9s=";
 const SESSION_TTL = 86400; // 1 day in seconds
-const REDIS_URI = process.env.REDIS_URI || 'redis://localhost:6379/1';
+const REDIS_URI = process.env.REDIS_URI || "redis://localhost:6379/1";
 
 export const buildFastify = (options?: FastifyServerOptions): FastifyInstance => {
   const fastify = createFastify(options);
 
   fastify.register(fastifyCookie);
   fastify.register(fastifySession, {
-    key: Buffer.from(SESSION_KEY, 'base64'),
+    key: Buffer.from(SESSION_KEY, "base64"),
     crypto: SODIUM_AUTH,
     store: new RedisStore({ client: new Redis(REDIS_URI), ttl: SESSION_TTL }),
     cookie: { maxAge: SESSION_TTL },
@@ -124,7 +124,7 @@ Here we used a `secret` instead of providing a `key`, key derivation will happen
 ```ts
 import createFastify, { FastifyInstance, FastifyServerOptions } from "fastify";
 import fastifyCookie from "fastify-cookie";
-import fastifySession from "@mgcrea/fastify-session";
+import fastifySession from "fastify-session-plus";
 import { SODIUM_SECRETBOX } from "@mgcrea/fastify-session-sodium-crypto";
 
 const SESSION_TTL = 86400; // 1 day in seconds
@@ -150,7 +150,7 @@ Here we used [msgpackr](https://npm.im/msgpackr) to serialize the data instead o
 ```ts
 import createFastify, { FastifyInstance, FastifyServerOptions } from "fastify";
 import fastifyCookie from "fastify-cookie";
-import fastifySession, { StatelessStore } from "@mgcrea/fastify-session";
+import fastifySession, { StatelessStore } from "fastify-session-plus";
 import { SODIUM_SECRETBOX } from "@mgcrea/fastify-session-sodium-crypto";
 import { pack, unpack } from "msgpackr";
 
@@ -206,12 +206,14 @@ Fastest is SODIUM_SECRETBOX#unsealJson
 
 ## Authors
 
-- [Olivier Louvignes](https://github.com/mgcrea) <<olivier@mgcrea.io>>
+- [dmkng](https://github.com/dmkng) <<susan@themaking.party>>
 
 ### Credits
 
 Heavily inspired from
 
+- [fastify-session](https://github.com/mgcrea/fastify-session) by
+  [Olivier Louvignes](https://github.com/mgcrea)
 - [fastify-secure-session](https://github.com/fastify/fastify-secure-session) by
   [Matteo Collina](https://github.com/mcollina)
 - [fastify-session](https://github.com/SerayaEryn/fastify-session) by [Denis Fäcke](https://github.com/SerayaEryn)
@@ -224,6 +226,7 @@ Heavily inspired from
 The MIT License
 
 Copyright (c) 2020 Olivier Louvignes <olivier@mgcrea.io>
+Copyright (c) 2024 dmkng <susan@themaking.party>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 documentation files (the "Software"), to deal in the Software without restriction, including without limitation the

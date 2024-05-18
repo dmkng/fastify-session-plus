@@ -2,7 +2,7 @@
   "name": "fastify-session-plus",
   "version": "1.0.0",
   "description": "Session plugin for fastify written in TypeScript supporting both stateless and stateful sessions. This is a fork with additional backward compatible features.",
-  "author": "dmkng",
+  "author": "dmkng <susan@themaking.party>",
   "repository": "github:dmkng/fastify-session-plus",
   "license": "MIT",
   "access": "public",
