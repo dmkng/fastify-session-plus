@@ -30,9 +30,9 @@ export const plugin: FastifyPluginAsync<FastifySessionOptions> = async (
     cookieName = DEFAULT_COOKIE_NAME,
     cookie: cookieOptions = {},
     store,
-    crypto = HMAC as SessionCrypto,
+    crypto = HMAC,
     saveUninitialized = true,
-    logBindings = { plugin: "fastify-session" },
+    logBindings = { plugin: "fastify-sessions" },
   } = options;
 
   if (!key && !secret) {

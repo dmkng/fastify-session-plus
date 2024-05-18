@@ -31,13 +31,13 @@ declare class Hmac implements SessionCrypto {
 declare const HMAC: Hmac;
 
 type SessionConfiguration = {
-    cookieOptions?: CookieSerializeOptions;
-    crypto?: SessionCrypto;
-    store?: SessionStore | undefined;
+    cookieOptions: CookieSerializeOptions;
+    crypto: SessionCrypto;
+    store?: SessionStore;
     secretKeys: Buffer[];
 };
 type SessionOptions = CookieSerializeOptions & {
-    id?: string;
+    id?: string | null;
 };
 /**
  * The Session class is responsible for managing user session data.
@@ -45,7 +45,7 @@ type SessionOptions = CookieSerializeOptions & {
  */
 declare class Session<T extends SessionData = SessionData> {
     #private;
-    readonly id: string | undefined;
+    readonly id?: string;
     created: boolean;
     rotated: boolean;
     changed: boolean;
@@ -163,7 +163,7 @@ type JsonValue = JsonPrimitive | JsonObject | JsonArray;
  * using [declaration merging](https://www.typescriptlang.org/docs/handbook/declaration-merging.html).
  *
  * @example
- * declare module '@mgcrea/fastify-session' {
+ * declare module 'fastify-sessions' {
  *     interface SessionData {
  *         views: number;
  *     }
@@ -213,7 +213,7 @@ declare class StatelessStore<T extends SessionData = SessionData> implements Ses
     readonly serialize: (session: T) => Promise<Buffer>;
     readonly deserialize: (session: Buffer) => Promise<T>;
     readonly useId: boolean;
-    constructor({ serialize, deserialize, useId }?: StatelessStoreOptions<T>);
+    constructor({ serialize, deserialize, useId, }?: StatelessStoreOptions<T>);
     get(): Promise<[T, number | null] | null>;
     set(): Promise<void>;
     destroy(): Promise<void>;

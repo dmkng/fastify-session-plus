@@ -14,7 +14,7 @@ export class StatelessStore<T extends SessionData = SessionData> implements Sess
   constructor({
     serialize = async (session: T): Promise<Buffer> => Buffer.from(JSON.stringify(session)),
     deserialize = async (session: Buffer): Promise<T> => JSON.parse(session.toString()),
-    useId = true
+    useId = true,
   }: StatelessStoreOptions<T> = {}) {
     this.serialize = serialize;
     this.deserialize = deserialize;

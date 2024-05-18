@@ -1,20 +1,26 @@
 import { SODIUM_AUTH, SODIUM_SECRETBOX } from "@mgcrea/fastify-session-sodium-crypto";
 import benchmark from "benchmark";
+import { pack } from "msgpackr";
 import { HMAC } from "src";
-import { secretKey } from "test/fixtures";
+import { rawFixture, secretKey } from "test/fixtures";
 
 const { Suite } = benchmark;
-const jsonMessage = Buffer.from(JSON.stringify({ hello: "world" }));
+
+const message = Buffer.from(JSON.stringify(rawFixture));
+const msgpackMessage = pack(rawFixture);
 
 new Suite()
+  .add("SODIUM_SECRETBOX#sealMsgpack", function () {
+    SODIUM_SECRETBOX.sealMessage(msgpackMessage, secretKey);
+  })
   .add("SODIUM_SECRETBOX#sealJson", function () {
-    SODIUM_SECRETBOX.sealMessage(jsonMessage, secretKey);
+    SODIUM_SECRETBOX.sealMessage(message, secretKey);
   })
   .add("SODIUM_AUTH#sealJson", function () {
-    SODIUM_AUTH.sealMessage(jsonMessage, secretKey);
+    SODIUM_AUTH.sealMessage(message, secretKey);
   })
   .add("HMAC#sealJson", function () {
-    HMAC.sealMessage(jsonMessage, secretKey);
+    HMAC.sealMessage(message, secretKey);
   })
   // add listeners
   .on("cycle", function (event: Event) {

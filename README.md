@@ -1,45 +1,45 @@
-# FastifySession+
+# fastify-sessions
 
 <!-- markdownlint-disable MD033 -->
 <p align="center">
-  <a href="https://www.npmjs.com/package/fastify-session-plus">
-    <img src="https://img.shields.io/npm/v/fastify-session-plus.svg?style=for-the-badge" alt="npm version" />
+  <a href="https://www.npmjs.com/package/fastify-sessions">
+    <img src="https://img.shields.io/npm/v/fastify-sessions.svg?style=for-the-badge" alt="npm version" />
   </a>
-  <a href="https://www.npmjs.com/package/fastify-session-plus">
-    <img src="https://img.shields.io/npm/dt/fastify-session-plus.svg?style=for-the-badge" alt="npm total downloads" />
+  <a href="https://www.npmjs.com/package/fastify-sessions">
+    <img src="https://img.shields.io/npm/dt/fastify-sessions.svg?style=for-the-badge" alt="npm total downloads" />
   </a>
-  <a href="https://www.npmjs.com/package/fastify-session-plus">
-    <img src="https://img.shields.io/npm/dm/fastify-session-plus.svg?style=for-the-badge" alt="npm monthly downloads" />
+  <a href="https://www.npmjs.com/package/fastify-sessions">
+    <img src="https://img.shields.io/npm/dm/fastify-sessions.svg?style=for-the-badge" alt="npm monthly downloads" />
   </a>
-  <a href="https://www.npmjs.com/package/fastify-session-plus">
-    <img src="https://img.shields.io/npm/l/fastify-session-plus.svg?style=for-the-badge" alt="npm license" />
+  <a href="https://www.npmjs.com/package/fastify-sessions">
+    <img src="https://img.shields.io/npm/l/fastify-sessions.svg?style=for-the-badge" alt="npm license" />
   </a>
   <br />
-  <a href="https://github.com/dmkng/fastify-session-plus/actions/workflows/main.yml">
-    <img src="https://img.shields.io/github/actions/workflow/status/dmkng/fastify-session-plus/main.yml?style=for-the-badge&branch=master" alt="build status" />
+  <a href="https://github.com/dmkng/fastify-sessions/actions/workflows/main.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/dmkng/fastify-sessions/main.yml?style=for-the-badge&branch=master" alt="build status" />
   </a>
-  <a href="https://depfu.com/github/dmkng/fastify-session-plus">
-    <img src="https://img.shields.io/depfu/dependencies/github/dmkng/fastify-session-plus?style=for-the-badge" alt="dependencies status" />
+  <a href="https://depfu.com/github/dmkng/fastify-sessions">
+    <img src="https://img.shields.io/depfu/dependencies/github/dmkng/fastify-sessions?style=for-the-badge" alt="dependencies status" />
   </a>
 </p>
 <!-- markdownlint-enable MD037 -->
 
 ## Features
 
-Session plugin for [fastify](https://github.com/fastify/fastify) that supports both stateless and stateful sessions. This is a fork with additional backward compatible features.
+Session plugin for [fastify](https://npm.im/fastify) written in TypeScript supporting both stateless and stateful sessions, fork of [@mgcrea/fastify-session](https://npm.im/@mgcrea/fastify-session) adding a lot of features while keeping compatibility.
 
-- Requires [@fastify/cookie](https://github.com/fastify/fastify-cookie) to handle cookies.
+- Requires [@fastify/cookie](https://npm.im/@fastify/cookie) to handle cookies.
 
-- Works with [fastify](https://github.com/fastify/fastify) `^4.0.0` starting from `>=0.16.0`.
+- Works with [fastify](https://npm.im/fastify) `^4.0.0` starting from `>=0.16.0`.
 
 - Can leverage crypto addons like
-  [@mgcrea/fastify-session-sodium-crypto](https://github.com/mgcrea/fastify-session-sodium-crypto) to perform crypto.
+  [@mgcrea/fastify-session-sodium-crypto](https://npm.im/@mgcrea/fastify-session-sodium-crypto) to perform crypto.
 
 - Can leverage store addons like:
 
-  - [@mgcrea/fastify-session-redis-store](https://github.com/mgcrea/fastify-session-redis-store)
-  - [@mgcrea/fastify-session-prisma-store](https://github.com/mgcrea/fastify-session-prisma-store)
-  - [fastify-session-sqlite-store](https://github.com/oof2win2/fastify-session-sqlite-store)
+  - [@mgcrea/fastify-session-redis-store](https://npm.im/@mgcrea/fastify-session-redis-store)
+  - [@mgcrea/fastify-session-prisma-store](https://npm.im/@mgcrea/fastify-session-prisma-store)
+  - [fastify-session-sqlite-store](https://npm.im/fastify-session-sqlite-store)
 
 - Built with [TypeScript](https://www.typescriptlang.org/) for static type checking with exported types along the
   library.
@@ -47,9 +47,9 @@ Session plugin for [fastify](https://github.com/fastify/fastify) that supports b
 ## Install
 
 ```bash
-npm install fastify-session-plus @fastify/cookie
+npm install fastify-sessions @fastify/cookie
 # or
-pnpm add fastify-session-plus @fastify/cookie
+pnpm add fastify-sessions @fastify/cookie
 ```
 
 ## Quickstart
@@ -57,12 +57,12 @@ pnpm add fastify-session-plus @fastify/cookie
 ### Basic example (signed session with hmac stored in a volatile in-memory store)
 
 Defaults to a volatile in-memory store for sessions (great for tests), with
-[hmac](https://nodejs.org/api/crypto.html#crypto_crypto_createhmac_algorithm_key_options) for signature.
+[HMAC](https://nodejs.org/api/crypto.html#crypto_crypto_createhmac_algorithm_key_options) for signature.
 
 ```ts
 import createFastify, { FastifyInstance, FastifyServerOptions } from "fastify";
 import fastifyCookie from "@fastify/cookie";
-import fastifySession from "fastify-session-plus";
+import fastifySessions from "fastify-sessions";
 
 const SESSION_SECRET = "a secret with minimum length of 32 characters";
 const SESSION_TTL = 86400; // 1 day in seconds
@@ -71,7 +71,7 @@ export const buildFastify = (options?: FastifyServerOptions): FastifyInstance =>
   const fastify = createFastify(options);
 
   fastify.register(fastifyCookie);
-  fastify.register(fastifySession, {
+  fastify.register(fastifySessions, {
     secret: SESSION_SECRET,
     cookie: { maxAge: SESSION_TTL },
   });
@@ -83,16 +83,16 @@ export const buildFastify = (options?: FastifyServerOptions): FastifyInstance =>
 ### Production example (signed session with sodium stored in redis)
 
 For better performance/security, you can use the
-[@mgcrea/fastify-session-sodium-crypto](https://github.com/mgcrea/fastify-session-sodium-crypto) addon:
+[@mgcrea/fastify-session-sodium-crypto](https://npm.im/@mgcrea/fastify-session-sodium-crypto) addon:
 
-Leveraging an external redis store, the session id (generated with [nanoid](https://github.com/ai/nanoid)) is signed
+Leveraging an external redis store, the session id (generated with [nanoid](https://npm.im/nanoid)) is signed
 using a secret-key with
-[libsodium's crytpo_auth](https://libsodium.gitbook.io/doc/secret-key_cryptography/secret-key_authentication)
+[libsodium's crypto_auth](https://libsodium.gitbook.io/doc/secret-key_cryptography/secret-key_authentication)
 
 ```ts
 import createFastify, { FastifyInstance, FastifyServerOptions } from "fastify";
-import fastifyCookie from "fastify-cookie";
-import fastifySession from "fastify-session-plus";
+import fastifyCookie from "@fastify/cookie";
+import fastifySessions from "fastify-sessions";
 import { SODIUM_AUTH } from "@mgcrea/fastify-session-sodium-crypto";
 
 const SESSION_KEY = "Egb/g4RUumlD2YhWYfeDlm5MddajSjGEBhm0OW+yo9s=";
@@ -103,7 +103,7 @@ export const buildFastify = (options?: FastifyServerOptions): FastifyInstance =>
   const fastify = createFastify(options);
 
   fastify.register(fastifyCookie);
-  fastify.register(fastifySession, {
+  fastify.register(fastifySessions, {
     key: Buffer.from(SESSION_KEY, "base64"),
     crypto: SODIUM_AUTH,
     store: new RedisStore({ client: new Redis(REDIS_URI), ttl: SESSION_TTL }),
@@ -123,8 +123,8 @@ Here we used a `secret` instead of providing a `key`, key derivation will happen
 
 ```ts
 import createFastify, { FastifyInstance, FastifyServerOptions } from "fastify";
-import fastifyCookie from "fastify-cookie";
-import fastifySession from "fastify-session-plus";
+import fastifyCookie from "@fastify/cookie";
+import fastifySessions from "fastify-sessions";
 import { SODIUM_SECRETBOX } from "@mgcrea/fastify-session-sodium-crypto";
 
 const SESSION_TTL = 86400; // 1 day in seconds
@@ -133,7 +133,7 @@ export const buildFastify = (options?: FastifyServerOptions): FastifyInstance =>
   const fastify = createFastify(options);
 
   fastify.register(fastifyCookie);
-  fastify.register(fastifySession, {
+  fastify.register(fastifySessions, {
     secret: "a secret with minimum length of 32 characters",
     crypto: SODIUM_SECRETBOX,
     cookie: { maxAge: SESSION_TTL },
@@ -149,8 +149,8 @@ Here we used [msgpackr](https://npm.im/msgpackr) to serialize the data instead o
 
 ```ts
 import createFastify, { FastifyInstance, FastifyServerOptions } from "fastify";
-import fastifyCookie from "fastify-cookie";
-import fastifySession, { StatelessStore } from "fastify-session-plus";
+import fastifyCookie from "@fastify/cookie";
+import fastifySessions, { StatelessStore } from "fastify-sessions";
 import { SODIUM_SECRETBOX } from "@mgcrea/fastify-session-sodium-crypto";
 import { pack, unpack } from "msgpackr";
 
@@ -161,7 +161,7 @@ export const buildFastify = (options?: FastifyServerOptions): FastifyInstance =>
   const fastify = createFastify(options);
 
   fastify.register(fastifyCookie);
-  fastify.register(fastifySession, {
+  fastify.register(fastifySessions, {
     key: Buffer.from(SESSION_KEY, 'base64'),
     crypto: SODIUM_SECRETBOX,
     store: new StatelessStore({
@@ -181,27 +181,53 @@ export const buildFastify = (options?: FastifyServerOptions): FastifyInstance =>
 ### Session crypto sealing
 
 ```sh
-node --experimental-specifier-resolution=node --loader=ts-paths-esm-loader/transpile-only --no-warnings test/benchmark/cryptoSeal.ts
+npm run benchmark:cryptoSeal
 ```
 
 ```txt
-SODIUM_SECRETBOX#sealJson x 333,747 ops/sec ±0.62% (91 runs sampled)
-SODIUM_AUTH#sealJson x 376,300 ops/sec ±0.50% (89 runs sampled)
-HMAC#sealJson x 264,292 ops/sec ±3.13% (85 runs sampled)
-Fastest is SODIUM_AUTH#sealJson
+SODIUM_SECRETBOX#sealMsgpack x 653,658 ops/sec ±0.25% (90 runs sampled)
+SODIUM_SECRETBOX#sealJson x 647,044 ops/sec ±0.25% (93 runs sampled)
+SODIUM_AUTH#sealJson x 421,055 ops/sec ±0.18% (95 runs sampled)
+HMAC#sealJson x 195,364 ops/sec ±0.35% (92 runs sampled)
+Fastest is SODIUM_SECRETBOX#sealMsgpack
 ```
 
 ### Session crypto unsealing
 
 ```sh
-node --experimental-specifier-resolution=node --loader=ts-paths-esm-loader/transpile-only --no-warnings test/benchmark/cryptoUnseal.ts
+npm run benchmark:cryptoUnseal
 ```
 
 ```txt
-SODIUM_SECRETBOX#unsealJson x 424,297 ops/sec ±0.69% (86 runs sampled)
-SODIUM_AUTH#unsealJson x 314,736 ops/sec ±0.96% (89 runs sampled)
-HMAC#unsealJson x 145,037 ops/sec ±5.67% (78 runs sampled)
-Fastest is SODIUM_SECRETBOX#unsealJson
+SODIUM_SECRETBOX#unsealMsgpack x 527,228 ops/sec ±0.36% (89 runs sampled)
+SODIUM_SECRETBOX#unsealJson x 507,172 ops/sec ±0.29% (92 runs sampled)
+SODIUM_AUTH#unsealJson x 347,371 ops/sec ±0.24% (93 runs sampled)
+HMAC#unsealJson x 108,809 ops/sec ±0.76% (92 runs sampled)
+Fastest is SODIUM_SECRETBOX#unsealMsgpack
+```
+
+### Session crypto serializing
+
+```sh
+npm run benchmark:cryptoSerialize
+```
+
+```txt
+SODIUM_SECRETBOX#serializeMsgpack x 473,983 ops/sec ±0.31% (93 runs sampled)
+SODIUM_SECRETBOX#serializeJson x 327,130 ops/sec ±0.26% (92 runs sampled)
+Fastest is SODIUM_SECRETBOX#serializeMsgpack
+```
+
+### Session crypto deserializing
+
+```sh
+npm run benchmark:cryptoDeserialize
+```
+
+```txt
+SODIUM_SECRETBOX#deserializeMsgpack x 372,287 ops/sec ±0.24% (91 runs sampled)
+SODIUM_SECRETBOX#deserializeJson x 318,034 ops/sec ±0.24% (89 runs sampled)
+Fastest is SODIUM_SECRETBOX#deserializeMsgpack
 ```
 
 ## Authors
@@ -212,32 +238,10 @@ Fastest is SODIUM_SECRETBOX#unsealJson
 
 Heavily inspired from
 
-- [fastify-session](https://github.com/mgcrea/fastify-session) by
+- [@mgcrea/fastify-session](https://github.com/mgcrea/fastify-session) by
   [Olivier Louvignes](https://github.com/mgcrea)
 - [fastify-secure-session](https://github.com/fastify/fastify-secure-session) by
   [Matteo Collina](https://github.com/mcollina)
 - [fastify-session](https://github.com/SerayaEryn/fastify-session) by [Denis Fäcke](https://github.com/SerayaEryn)
 - [express-session](https://github.com/expressjs/session) by [Douglas Wilson](https://github.com/dougwilson)
 - [cookie-signature](https://github.com/tj/node-cookie-signature) by [TJ Holowaychuk](https://github.com/tj)
-
-## License
-
-```md
-The MIT License
-
-Copyright (c) 2020 Olivier Louvignes <olivier@mgcrea.io>
-Copyright (c) 2024 dmkng <susan@themaking.party>
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
-documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
-rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
-persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
-Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
-WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-```

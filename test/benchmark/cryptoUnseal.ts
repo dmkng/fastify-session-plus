@@ -1,11 +1,20 @@
 import { SODIUM_AUTH, SODIUM_SECRETBOX } from "@mgcrea/fastify-session-sodium-crypto";
 import benchmark from "benchmark";
 import { HMAC } from "src";
-import { hmacFixture, secretKey, sodiumAuthFixture, sodiumSecretboxFixture } from "test/fixtures";
+import {
+  hmacFixture,
+  secretKey,
+  sodiumAuthFixture,
+  sodiumSecretboxFixture,
+  sodiumSecretboxFixtureMsgpack,
+} from "test/fixtures";
 
 const { Suite } = benchmark;
 
 new Suite()
+  .add("SODIUM_SECRETBOX#unsealMsgpack", function () {
+    SODIUM_SECRETBOX.unsealMessage(sodiumSecretboxFixtureMsgpack, [secretKey]);
+  })
   .add("SODIUM_SECRETBOX#unsealJson", function () {
     SODIUM_SECRETBOX.unsealMessage(sodiumSecretboxFixture, [secretKey]);
   })

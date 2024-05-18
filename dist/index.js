@@ -124,6 +124,10 @@ var MemoryStore = class extends EventEmitter {
 };
 var MEMORY_STORE = new MemoryStore();
 
+// src/store/SessionStore.ts
+var SessionStore = class {
+};
+
 // src/store/StatelessStore.ts
 var StatelessStore = class {
   serialize;
@@ -147,10 +151,6 @@ var StatelessStore = class {
   }
 };
 var STATELESS_STORE = new StatelessStore();
-
-// src/store/SessionStore.ts
-var SessionStore = class {
-};
 
 // src/session/Session.ts
 var kSessionData = Symbol("kSessionData");
@@ -178,26 +178,27 @@ var Session = class _Session {
   /**
    * This method is used to setup the Session class with global options.
    */
-  static configure({
-    secretKeys,
-    crypto: crypto2 = HMAC,
-    store,
-    cookieOptions = {}
-  }) {
+  static configure({ secretKeys, crypto: crypto2, store, cookieOptions = {} }) {
     _Session.#secretKeys = secretKeys;
     _Session.#sessionCrypto = crypto2;
     _Session.#sessionStore = store || (crypto2.stateless ? STATELESS_STORE : MEMORY_STORE);
     _Session.#globalCookieOptions = cookieOptions;
     _Session.#configured = true;
+    if (crypto2.stateless && !(_Session.#sessionStore instanceof StatelessStore)) {
+      throw createError("InvalidConfiguration", "Provided crypto is stateless, but provided store is not.");
+    }
+    if (!crypto2.stateless && _Session.#sessionStore instanceof StatelessStore) {
+      throw createError("InvalidConfiguration", "Provided store is stateless, but provided crypto is not.");
+    }
   }
   /**
    * Private constructor - instances should be created via the static `create` method
    */
   constructor(data, options = {}) {
-    const { id = _Session.#sessionStore.useId ? nanoid() : void 0, ...cookieOptions } = options;
+    const { id = nanoid(), ...cookieOptions } = options;
     this.#sessionData = data || {};
     this.#cookieOptions = { ..._Session.#globalCookieOptions, ...cookieOptions };
-    this.id = id;
+    this.id = id || void 0;
     this.created = !data;
   }
   /**
@@ -237,12 +238,11 @@ var Session = class _Session {
     try {
       data = await _Session.#sessionStore.deserialize(payload);
     } catch (error) {
-      throw createError(
-        "InvalidData",
-        "Failed to parse session data from cookie. Original error: " + error
-      );
+      throw createError("InvalidData", "Failed to parse session data from cookie. Original error: " + error);
     }
-    const session = await _Session.create(data, _Session.#sessionStore.useId ? { id: data.id } : void 0);
+    const session = await _Session.create(data, {
+      id: _Session.#sessionStore.useId ? data.id : null
+    });
     session.rotated = rotated;
     return session;
   }
@@ -278,10 +278,12 @@ var Session = class _Session {
     if (!_Session.#secretKeys[0]) {
       throw createError("MissingSecretKey", "Missing secret key for session encryption");
     }
-    const buffer = _Session.#sessionCrypto.stateless ? await _Session.#sessionStore.serialize(_Session.#sessionStore.useId ? {
-      ...this.#sessionData,
-      id: this.id
-    } : this.#sessionData) : Buffer.from(this.id);
+    const buffer = _Session.#sessionCrypto.stateless ? await _Session.#sessionStore.serialize(
+      _Session.#sessionStore.useId ? {
+        ...this.#sessionData,
+        id: this.id
+      } : this.#sessionData
+    ) : Buffer.from(this.id);
     return _Session.#sessionCrypto.sealMessage(buffer, _Session.#secretKeys[0]);
   }
   /**
@@ -374,7 +376,7 @@ var plugin = async (fastify, options = {}) => {
     store,
     crypto: crypto2 = HMAC,
     saveUninitialized = true,
-    logBindings = { plugin: "fastify-session" }
+    logBindings = { plugin: "fastify-sessions" }
   } = options;
   if (!key && !secret) {
     throw new Error("key or secret must specified");
@@ -472,7 +474,7 @@ var plugin = async (fastify, options = {}) => {
 // src/index.ts
 var src_default = fastifyPlugin(plugin, {
   fastify: "4.x",
-  name: "fastify-session"
+  name: "fastify-sessions"
 });
 export {
   CRYPTO_SPLIT_CHAR,

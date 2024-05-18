@@ -1,9 +1,8 @@
 import type { CookieSerializeOptions } from "@fastify/cookie";
 import { nanoid } from "nanoid";
 import assert from "node:assert";
-import { HMAC } from "../crypto/Hmac";
 import type { SessionCrypto } from "../crypto/SessionCrypto";
-import { MEMORY_STORE, STATELESS_STORE, StatelessStore, SessionStore } from "../store";
+import { MEMORY_STORE, STATELESS_STORE, SessionStore, StatelessStore } from "../store";
 import { createError } from "../utils";
 import type { SessionData } from "./SessionData";
 
@@ -11,14 +10,14 @@ export const kSessionData = Symbol("kSessionData");
 export const kCookieOptions = Symbol("kCookieOptions");
 
 export type SessionConfiguration = {
-  cookieOptions?: CookieSerializeOptions;
-  crypto?: SessionCrypto;
-  store?: SessionStore | undefined;
+  cookieOptions: CookieSerializeOptions;
+  crypto: SessionCrypto;
+  store?: SessionStore;
   secretKeys: Buffer[];
 };
 
 export type SessionOptions = CookieSerializeOptions & {
-  id?: string;
+  id?: string | null;
 };
 
 /**
@@ -27,7 +26,7 @@ export type SessionOptions = CookieSerializeOptions & {
  */
 export class Session<T extends SessionData = SessionData> {
   // Session metadata
-  public readonly id: string | undefined;
+  public readonly id?: string;
   public created = false;
   public rotated = false;
   public changed = false;
@@ -50,27 +49,28 @@ export class Session<T extends SessionData = SessionData> {
   /**
    * This method is used to setup the Session class with global options.
    */
-  static configure({
-    secretKeys,
-    crypto = HMAC,
-    store,
-    cookieOptions = {}
-  }: SessionConfiguration): void {
+  static configure({ secretKeys, crypto, store, cookieOptions = {} }: SessionConfiguration): void {
     Session.#secretKeys = secretKeys;
     Session.#sessionCrypto = crypto;
     Session.#sessionStore = store || (crypto.stateless ? STATELESS_STORE : MEMORY_STORE);
     Session.#globalCookieOptions = cookieOptions;
     Session.#configured = true;
+    if (crypto.stateless && !(Session.#sessionStore instanceof StatelessStore)) {
+      throw createError("InvalidConfiguration", "Provided crypto is stateless, but provided store is not.");
+    }
+    if (!crypto.stateless && Session.#sessionStore instanceof StatelessStore) {
+      throw createError("InvalidConfiguration", "Provided store is stateless, but provided crypto is not.");
+    }
   }
 
   /**
    * Private constructor - instances should be created via the static `create` method
    */
   private constructor(data?: Partial<T>, options: SessionOptions = {}) {
-    const { id = (Session.#sessionStore as StatelessStore).useId ? nanoid() : undefined, ...cookieOptions } = options;
+    const { id = nanoid(), ...cookieOptions } = options;
     this.#sessionData = data || {};
     this.#cookieOptions = { ...Session.#globalCookieOptions, ...cookieOptions };
-    this.id = id;
+    this.id = id || undefined;
     this.created = !data;
   }
 
@@ -118,12 +118,11 @@ export class Session<T extends SessionData = SessionData> {
     try {
       data = await (Session.#sessionStore as StatelessStore).deserialize(payload);
     } catch (error) {
-      throw createError(
-        "InvalidData",
-        "Failed to parse session data from cookie. Original error: " + error,
-      );
+      throw createError("InvalidData", "Failed to parse session data from cookie. Original error: " + error);
     }
-    const session = await Session.create(data, (Session.#sessionStore as StatelessStore).useId ? { id: data.id as string } : undefined);
+    const session = await Session.create(data, {
+      id: (Session.#sessionStore as StatelessStore).useId ? (data.id as string) : null,
+    });
     session.rotated = rotated;
     return session;
   }
@@ -162,9 +161,16 @@ export class Session<T extends SessionData = SessionData> {
     if (!Session.#secretKeys[0]) {
       throw createError("MissingSecretKey", "Missing secret key for session encryption");
     }
-    const buffer = Session.#sessionCrypto.stateless ? await (Session.#sessionStore as StatelessStore).serialize((Session.#sessionStore as StatelessStore).useId ? {
-      ...this.#sessionData, id: this.id
-    } : this.#sessionData) : Buffer.from(this.id as string);
+    const buffer = Session.#sessionCrypto.stateless
+      ? await (Session.#sessionStore as StatelessStore).serialize(
+          (Session.#sessionStore as StatelessStore).useId
+            ? {
+                ...this.#sessionData,
+                id: this.id,
+              }
+            : this.#sessionData,
+        )
+      : Buffer.from(this.id as string);
     return Session.#sessionCrypto.sealMessage(buffer, Session.#secretKeys[0]);
   }
 

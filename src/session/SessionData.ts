@@ -5,7 +5,7 @@ import type { JsonObject } from "src/typings";
  * using [declaration merging](https://www.typescriptlang.org/docs/handbook/declaration-merging.html).
  *
  * @example
- * declare module '@mgcrea/fastify-session' {
+ * declare module 'fastify-sessions' {
  *     interface SessionData {
  *         views: number;
  *     }
